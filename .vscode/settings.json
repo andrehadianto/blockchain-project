@@ -1,3 +1,4 @@
 {
-  "python.pythonPath": "blockchain\\Scripts\\python.exe"
+  "python.pythonPath": "blockchain\\Scripts\\python.exe",
+  "python.formatting.provider": "autopep8"
 }

@@ -24,8 +24,7 @@ class TransactionWorker(threading.Thread):
     self.users = users
 
   def run(self):
-    # random_transactions = random.randint(50,60)
-    random_transactions = 56
+    random_transactions = random.randint(10, 14)
     transaction_list = []
     for _ in range(0, random_transactions):
       random_sender = random.randint(0,5)

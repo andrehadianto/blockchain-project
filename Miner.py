@@ -4,18 +4,7 @@ import hashlib
 from Users import user_db
 import random
 import cbor
-
-#Question 1
-#Design and implement a Miner class realizing miner's functionalities. Then, implement a simple simulator with miners running Nakamoto consensus and making transactions:
-
-#Adjust the TARGET (global and static) parameter, such that on average new blocks arrive every few (2-5) seconds.
-#A miner who found a new block should be rewarded with 100 SUTDcoins.
-#Introduce random transactions, such that miners (with coins) can send transactions to other miners.
-#Make sure that coins cannot be double-spent.
-#consider the addr:balance model and the UTXO model. What are pros and cons?
-#do you need to modify (why, if so) the transaction format introduced in the first week? Hint: yes, you need.
-#Extend the verification checks.
-#Simulate miners competition.
+import time
 
 COINS_PER_BLOCK = 100
 MAX_TRANS_PER_BLOCK = 4
@@ -28,9 +17,12 @@ class Miner():
     
     def mine(self):
         pool = []
-        random_unique_index = random.sample(range(0, len(self.blockchain.transactions_pool)), 4)
-        for i in random_unique_index:
-            pool.append(self.blockchain.transactions_pool[i])
+        if len(self.blockchain.transactions_pool)<4:
+            pool.extend(self.blockchain.transactions_pool)
+        else:
+            random_unique_index = random.sample(range(0, len(self.blockchain.transactions_pool)), 4)
+            for i in random_unique_index:
+                pool.append(self.blockchain.transactions_pool[i])
         trans = []
         temp_balance = {} # key = user value = balance
         for transaction in pool:
@@ -59,6 +51,7 @@ class Miner():
         block = Block(trans, prev_header)
         #get pow
         counter = 0
+        start = time.time()
         while True:
             if counter % 10000 == 0:
                 print("Mine attempt:", counter, " by: ", self.miner_id[0:5])
@@ -66,8 +59,8 @@ class Miner():
             if prev_header != self.blockchain.longest_header:
                 print("Longest header has changed. Other miner finished first...")
                 break
-            genNonce = str(random.randint(0, 300000))
-            block.header['nonce'] = genNonce
+            generate_nonce = str(random.randint(0, 300000))
+            block.header['nonce'] = generate_nonce
             to_hash = cbor.dumps(block.header)
             digest = hashlib.sha256(to_hash).digest()
             if digest < self.blockchain.target:
@@ -78,9 +71,10 @@ class Miner():
                         user_db[transaction.receiver]["balance"] += transaction.amount
                     # get miner balance
                     user_db[self.miner_id]["balance"] = user_db[self.miner_id].get("balance", 0) + COINS_PER_BLOCK #reward
+                    print('Mining successful. Time taken: ', time.time()-start)
                     # announce to everyone 
                 except Exception as e:
-                    print("Mining failed, blockchain reject submitted block:", e)
+                    print("Mining failed, blockchain reject submitted block:", e, 'time taken: ',time.time()-start)
                 break
             counter+= 1
 
