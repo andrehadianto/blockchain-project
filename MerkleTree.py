@@ -42,15 +42,14 @@ class MerkleTree():
             cycle += 1
             merkel_chain.append(level_)
             n = math.ceil(n/2)
-            
         self.merkel_chain = merkel_chain
-        
+
     def get_root(self):
         return self.merkel_chain[-1]
-        
+
     def get_leaves(self):
         return self.merkel_chain[0]
-        
+
     def get_min_nodes(self,transaction):
         idx = self.past_transactions.index(transaction)
         original_idx = idx
@@ -89,16 +88,16 @@ class MerkleTree():
             digest = hashlib.sha256(to_hash.encode()).digest()
         else:
             #node is on the right
-            to_hash =  str(neighbour)+str(digest)
+            to_hash =  str(neighbour) + str(digest)
             digest = hashlib.sha256(to_hash.encode()).digest()
         for i in nodes:
             print(i[0],type(i[0]))
             if i[1]== "Left":
                 #my node is right, my neighbour is left. Left goes first
-                to_hash = str(i[0])+str(digest)
+                to_hash = str(i[0]) + str(digest)
                 digest = hashlib.sha256(to_hash.encode()).digest()
             else:
-                to_hash = str(digest) +str(i[0])
+                to_hash = str(digest) + str(i[0])
                 digest = hashlib.sha256(to_hash.encode()).digest()
             print(digest)
         print("the root is ,",root)

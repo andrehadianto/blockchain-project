@@ -27,8 +27,10 @@ class Miner():
         self.blockchain = blockchain
     
     def mine(self):
-        print("start mining...")
-        pool = self.blockchain.transactions_pool
+        pool = []
+        random_unique_index = random.sample(range(0, len(self.blockchain.transactions_pool)), 4)
+        for i in random_unique_index:
+            pool.append(self.blockchain.transactions_pool[i])
         trans = []
         temp_balance = {} # key = user value = balance
         for transaction in pool:
@@ -47,7 +49,7 @@ class Miner():
                 continue
             temp_balance[transaction.sender] -= transaction.amount
             temp_balance[transaction.receiver] += transaction.amount
-            print("Transaction can be processed: suffice balance...")
+            print("Transaction can be processed: sufficient balance...")
             #get sender and amount
         # Init block and build tree
         prev_header = self.blockchain.longest_header
@@ -58,10 +60,11 @@ class Miner():
         #get pow
         counter = 0
         while True:
-            if counter % 1000 == 0:
-                print("Mine attempt:", counter)
+            if counter % 10000 == 0:
+                print("Mine attempt:", counter, " by: ", self.miner_id[0:5])
             #drop block if someone else has added to the chain
             if prev_header != self.blockchain.longest_header:
+                print("Longest header has changed. Other miner finished first...")
                 break
             genNonce = str(random.randint(0, 300000))
             block.header['nonce'] = genNonce
