@@ -27,13 +27,14 @@ if __name__ == "__main__":
     worker_0.join()
     worker_1.join()
     
-    print("\nsutdcoin blockchain graph:", sutdcoin.graph)
-    print("\nsutdcoin user_db:", user_db)
+    print("\nsutdcoin blockchain graph")
+    for k, v in sutdcoin.graph.items():
+        print("BLOCK: ",k)
+        print("CHILDREN: ",v["children"])
+        print("HEIGHT: ",v["level_n"])
+        print("TIMESTAMP: ",v["timestamp"],"\n")
 
-
-
-""" Things to do: 
-- Fork demo
-- Make sure coin cant be double spent, check wallet
-- Simulate miners competition
-"""
+    print("\nsutdcoin user_db")
+    for k, v in user_db.items():
+        print("USER_ID: ",k)
+        print("BALANCE: ",v["balance"], "\n")

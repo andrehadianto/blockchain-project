@@ -9,29 +9,32 @@ import time
 COINS_PER_BLOCK = 100
 MAX_TRANS_PER_BLOCK = 4
 
+
 class Miner():
-    
+
     def __init__(self, miner_id, blockchain):
         self.miner_id = miner_id
         self.blockchain = blockchain
-    
+
     def mine(self):
         pool = []
-        if len(self.blockchain.transactions_pool)<4:
+        if len(self.blockchain.transactions_pool) < 4:
             pool.extend(self.blockchain.transactions_pool)
         else:
-            random_unique_index = random.sample(range(0, len(self.blockchain.transactions_pool)), 4)
+            random_unique_index = random.sample(
+                range(0, len(self.blockchain.transactions_pool)), 4)
             for i in random_unique_index:
                 pool.append(self.blockchain.transactions_pool[i])
         trans = []
-        temp_balance = {} # key = user value = balance
+        temp_balance = {}  # {user: balance}
         for transaction in pool:
             trans.append(transaction)
             if transaction.sender not in temp_balance:
-                # to do : function to get balance get_balance(transaction.sender)
-                temp_balance[transaction.sender] = user_db[transaction.sender].get("balance")
+                temp_balance[transaction.sender] = user_db[transaction.sender].get(
+                    "balance")
             if transaction.receiver not in temp_balance:
-                temp_balance[transaction.receiver] = user_db[transaction.receiver].get("balance")
+                temp_balance[transaction.receiver] = user_db[transaction.receiver].get(
+                    "balance")
 
         for transaction in trans:
             if temp_balance[transaction.sender] - transaction.amount < 0:
@@ -42,20 +45,19 @@ class Miner():
             temp_balance[transaction.sender] -= transaction.amount
             temp_balance[transaction.receiver] += transaction.amount
             print("Transaction can be processed: sufficient balance...")
-            #get sender and amount
         # Init block and build tree
         prev_header = self.blockchain.longest_header
         if len(trans) == 0:
             return "All transactions invalid"
-        
+
         block = Block(trans, prev_header)
-        #get pow
+        # get pow
         counter = 0
         start = time.time()
         while True:
-            if counter % 10000 == 0:
+            if counter % 100000 == 0:
                 print("Mine attempt:", counter, " by: ", self.miner_id[0:5])
-            #drop block if someone else has added to the chain
+            # drop block if someone else has added to the chain
             if prev_header != self.blockchain.longest_header:
                 print("Longest header has changed. Other miner finished first...")
                 break
@@ -67,16 +69,18 @@ class Miner():
                 try:
                     self.blockchain.add(block)
                     for transaction in trans:
-                        user_db[transaction.sender]["balance"] -= transaction.amount
-                        user_db[transaction.receiver]["balance"] += transaction.amount
+                        if self.blockchain.existing_transaction[transaction.serialize()] < 2:
+                            user_db[transaction.sender]["balance"] -= transaction.amount
+                            user_db[transaction.receiver]["balance"] += transaction.amount
                     # get miner balance
-                    user_db[self.miner_id]["balance"] = user_db[self.miner_id].get("balance", 0) + COINS_PER_BLOCK #reward
+                    user_db[self.miner_id]["balance"] += COINS_PER_BLOCK  # reward
                     print('Mining successful. Time taken: ', time.time()-start)
-                    # announce to everyone 
+                    # announce to everyone
                 except Exception as e:
-                    print("Mining failed, blockchain reject submitted block:", e, 'time taken: ',time.time()-start)
+                    print("Mining failed, blockchain reject submitted block:",
+                          e, 'time taken: ', time.time()-start)
                 break
-            counter+= 1
+            counter += 1
 
     def check_balance(self, public_key):
         chain = self.blockchain
@@ -90,4 +94,3 @@ class Miner():
                 balance += v.amount
                 transactions_list.append(v)
         return balance
-        

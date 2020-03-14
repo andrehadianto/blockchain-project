@@ -19,6 +19,7 @@ class BlockChain:
         self.genesis()
         self.existing_transaction = {}
         self.transactions_pool = []
+        self.rejected_transaction = []
 
     def add_transaction_to_pool(self, transactions):
         self.transactions_pool.extend(transactions)
@@ -27,6 +28,7 @@ class BlockChain:
         try:
             self.transactions_pool.remove(transaction)
             print('transaction ',transaction,' is removed')
+            self.rejected_transaction.append(transaction)
         except:
             print('transaction ',transaction,' is already removed')
 
@@ -41,7 +43,7 @@ class BlockChain:
         }
         counter = 0
         while True:
-            if counter % 10000 == 0:
+            if counter % 100000 == 0:
                 print("genesis attempt: ",counter)
             generate_nonce = str(random.randint(0, 300000))
             genesis_header['nonce'] = generate_nonce
@@ -80,7 +82,7 @@ class BlockChain:
             self.graph[block.get_header()["prev_header"]]["children"].append(digest)
             self.graph[digest] = {"children": [], "level_n": prev_level + 1, "body": block, "timestamp": block.get_header()["timestamp"]}
             for txn in block.merkle_tree.past_transactions:
-                self.existing_transaction[txn.serialize()] = 1
+                self.existing_transaction[txn.serialize()] = self.existing_transaction.get(txn.serialize(), 0) + 1
                 self.remove_transaction_from_pool(txn)
             # Updating difficulty
             if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] > 5:
@@ -91,12 +93,15 @@ class BlockChain:
                 self.midfix = int.to_bytes(int.from_bytes(self.midfix, 'little') - 256, 2, 'little')
                 self.target = self.target_prefix + self.midfix*2 + suffix*252
                 print("increasing target difficulty")
-            self.resolve()
+            self.resolve_longest_header()
 
-    def resolve(self): #finds the longest header and updates it 
+    def resolve_longest_header(self): #finds the longest header and updates it 
         highest_level_n = 0
         highest_level_n_digest = []
         for digest, node in self.graph.items(): #finding the highest level_n
+            if len(node["children"]) > 1:
+                print('Fork is found...')
+            #check transaction
             if node["level_n"] > highest_level_n:
                 highest_level_n_digest = [] #getting nodes with highest level_n
                 highest_level_n_digest.append(digest)
