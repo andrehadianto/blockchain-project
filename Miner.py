@@ -56,7 +56,7 @@ class Miner():
         start = time.time()
         while True:
             if counter % 100000 == 0:
-                print("Mine attempt:", counter, " by: ", self.miner_id[0:5])
+                print("Mine attempt:", counter, " by: ", self.miner_id[0:6])
             # drop block if someone else has added to the chain
             if prev_header != self.blockchain.longest_header:
                 print("Longest header has changed. Other miner finished first...")
@@ -64,7 +64,7 @@ class Miner():
             generate_nonce = str(random.randint(0, 300000))
             block.header['nonce'] = generate_nonce
             to_hash = cbor.dumps(block.header)
-            digest = hashlib.sha256(to_hash).digest()
+            digest = hashlib.sha256(to_hash).hexdigest()
             if digest < self.blockchain.target:
                 try:
                     self.blockchain.add(block)

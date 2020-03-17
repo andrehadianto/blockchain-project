@@ -8,12 +8,13 @@ prefix = b'\x00'
 midfix = b'\x9f'
 suffix = b'\xbb'
 
+
 class BlockChain:
-    
+
     def __init__(self):
         self.target_prefix = prefix * 2
-        self.midfix = midfix 
-        self.target = self.target_prefix + self.midfix*2 + suffix*252
+        self.midfix = midfix
+        self.target = (self.target_prefix + self.midfix*2 + suffix*252).hex()
         self.longest_header = None
         self.graph = {}
         self.genesis()
@@ -23,14 +24,14 @@ class BlockChain:
 
     def add_transaction_to_pool(self, transactions):
         self.transactions_pool.extend(transactions)
-        
+
     def remove_transaction_from_pool(self, transaction):
         try:
             self.transactions_pool.remove(transaction)
-            print('transaction ',transaction,' is removed')
+            print('transaction ', transaction, ' is removed')
             self.rejected_transaction.append(transaction)
         except:
-            print('transaction ',transaction,' is already removed')
+            print('transaction ', transaction, ' is already removed')
 
     def genesis(self):
         start = time.time()
@@ -44,19 +45,20 @@ class BlockChain:
         counter = 0
         while True:
             if counter % 100000 == 0:
-                print("genesis attempt: ",counter)
+                print("genesis attempt: ", counter)
             generate_nonce = str(random.randint(0, 300000))
             genesis_header['nonce'] = generate_nonce
             to_hash = cbor.dumps(genesis_header)
-            digest = hashlib.sha256(to_hash).digest()
+            digest = hashlib.sha256(to_hash).hexdigest()
             if digest < self.target:
                 break
-            counter+= 1
+            counter += 1
         print("genesis block created! Time taken:", time.time()-start)
-        self.graph[digest] = {"children": [], "level_n": 0, "body": None, "timestamp": genesis_header["timestamp"]}
+        self.graph[digest] = {"children": [], "level_n": 0,
+                              "body": None, "timestamp": genesis_header["timestamp"]}
         self.longest_header = digest
 
-    def validate(self, block): #check if incoming block is legit
+    def validate(self, block):  # check if incoming block is legit
         header = block.get_header()
         if self.verify_pow(block) is not True:
             return False
@@ -70,7 +72,7 @@ class BlockChain:
 
     def verify_pow(self, block):
         to_hash = block.serialize()
-        digest = hashlib.sha256(to_hash).digest()
+        digest = hashlib.sha256(to_hash).hexdigest()
         if digest < self.target:
             return True
         return False
@@ -78,37 +80,47 @@ class BlockChain:
     def add(self, block):
         if self.validate(block):
             digest = block.hash_header()
-            prev_level = self.graph[block.get_header()["prev_header"]]["level_n"]
-            self.graph[block.get_header()["prev_header"]]["children"].append(digest)
-            self.graph[digest] = {"children": [], "level_n": prev_level + 1, "body": block, "timestamp": block.get_header()["timestamp"]}
+            prev_level = self.graph[block.get_header()[
+                "prev_header"]]["level_n"]
+            self.graph[block.get_header()["prev_header"]
+                       ]["children"].append(digest)
+            self.graph[digest] = {"children": [], "level_n": prev_level + 1,
+                                  "body": block, "timestamp": block.get_header()["timestamp"]}
             for txn in block.merkle_tree.past_transactions:
-                self.existing_transaction[txn.serialize()] = self.existing_transaction.get(txn.serialize(), 0) + 1
+                self.existing_transaction[txn.serialize()] = self.existing_transaction.get(
+                    txn.serialize(), 0) + 1
                 self.remove_transaction_from_pool(txn)
             # Updating difficulty
             if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] > 5:
-                self.midfix = int.to_bytes(int.from_bytes(self.midfix, 'little') + 256, 2, 'little')
-                self.target = self.target_prefix + self.midfix*2 + suffix*252
+                self.midfix = int.to_bytes(int.from_bytes(
+                    self.midfix, 'little') + 256, 2, 'little')
+                self.target = (self.target_prefix + self.midfix*2 + suffix*252).hex()
                 print("reducing target difficulty")
-            if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] < 2: 
-                self.midfix = int.to_bytes(int.from_bytes(self.midfix, 'little') - 256, 2, 'little')
-                self.target = self.target_prefix + self.midfix*2 + suffix*252
+            if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] < 2:
+                self.midfix = int.to_bytes(int.from_bytes(
+                    self.midfix, 'little') - 256, 2, 'little')
+                self.target = (self.target_prefix + self.midfix*2 + suffix*252).hex()
                 print("increasing target difficulty")
             self.resolve_longest_header()
 
-    def resolve_longest_header(self): #finds the longest header and updates it 
+    # finds the longest header and updates it
+    def resolve_longest_header(self):
         highest_level_n = 0
         highest_level_n_digest = []
-        for digest, node in self.graph.items(): #finding the highest level_n
+        for digest, node in self.graph.items():  # finding the highest level_n
             if len(node["children"]) > 1:
                 print('Fork is found...')
-            #check transaction
+            # check transaction
             if node["level_n"] > highest_level_n:
-                highest_level_n_digest = [] #getting nodes with highest level_n
+                highest_level_n_digest = []  # getting nodes with highest level_n
                 highest_level_n_digest.append(digest)
                 highest_level_n += 1
             elif node["level_n"] == highest_level_n:
                 highest_level_n_digest.append(digest)
-            else: 
+            else:
                 continue
-        self.longest_header = highest_level_n_digest[random.randint(0, len(highest_level_n_digest) - 1)] #return a random header
+        self.longest_header = highest_level_n_digest[random.randint(
+            0, len(highest_level_n_digest) - 1)]  # return a random header
         print("The longest header is now ", self.longest_header)
+        # go to the shorter chaing
+        # and give refund to all the previous transactions
