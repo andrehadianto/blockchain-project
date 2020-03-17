@@ -146,20 +146,10 @@ class BlockChain:
             current_child = children
             if children != current_digest:
                 while True:
-                    to_refund.append(elf.graph[current_child]["body"]["root"]) #appends the root of all blocks of the shortest chain
+                    to_refund.append(self.graph[current_child]["body"].merkle_tree.past_transactions) #appends the root of all blocks of the shortest chain
                     if len(self.graph[current_child]["children"]) == 0:
                         break
                     else:
                         current_child = self.graph[current_child]["children"][0] #assume theres only 1 child please
         
         #to_refund does something
-
-
-
-
-                
-                    
-                
-
-            
-
