@@ -108,8 +108,8 @@ class BlockChain:
         highest_level_n = 0
         highest_level_n_digest = []
         for digest, node in self.graph.items():  # finding the highest level_n
-            if len(node["children"]) > 1:
-                print('Fork is found...')
+            # if len(node["children"]) > 1:
+            #     print('Fork is found...')
             # check transaction
             if node["level_n"] > highest_level_n:
                 highest_level_n_digest = []  # getting nodes with highest level_n
@@ -119,8 +119,47 @@ class BlockChain:
                 highest_level_n_digest.append(digest)
             else:
                 continue
-        self.longest_header = highest_level_n_digest[random.randint(
-            0, len(highest_level_n_digest) - 1)]  # return a random header
+        random_index = random.randint(0, len(highest_level_n_digest) - 1)
+        self.longest_header = highest_level_n_digest[random_index]  # return a random header
         print("The longest header is now ", self.longest_header)
         # go to the shorter chaing
         # and give refund to all the previous transactions
+        level_n_fork = highest_level_n - 1
+        fork_digest = 0
+        current_digest = self.longest_header
+        while True: #iterating to find the parents, stop until a fork is found
+            for digest, node in self.graph.items():
+                if node["level_n"] == level_n_fork and current_digest in node["children"]:
+                    if len(node["children"]) > 1:
+                        fork_digest = digest
+                    else:
+                        level_n_fork += 1
+                        current_digest = digest
+                    break
+            if fork_digest != 0: #fork is found
+                break
+        print("The fork is found at ", fork_digest)
+        
+        #issuing refund
+        to_refund = []
+        for children in self.graph[fork_digest]["children"]:
+            current_child = children
+            if children != current_digest:
+                while True:
+                    to_refund.append(elf.graph[current_child]["body"]["root"]) #appends the root of all blocks of the shortest chain
+                    if len(self.graph[current_child]["children"]) == 0:
+                        break
+                    else:
+                        current_child = self.graph[current_child]["children"][0] #assume theres only 1 child please
+        
+        #to_refund does something
+
+
+
+
+                
+                    
+                
+
+            
+
