@@ -87,19 +87,20 @@ class BlockChain:
             self.graph[digest] = {"children": [], "level_n": prev_level + 1,
                                   "body": block, "timestamp": block.get_header()["timestamp"]}
             for txn in block.merkle_tree.past_transactions:
-                self.existing_transaction[txn.serialize()] = self.existing_transaction.get(
-                    txn.serialize(), 0) + 1
+                self.existing_transaction[txn.serialize()] = self.existing_transaction.get(txn.serialize(), 0) + 1
                 self.remove_transaction_from_pool(txn)
             # Updating difficulty
             if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] > 5:
                 self.midfix = int.to_bytes(int.from_bytes(
                     self.midfix, 'little') + 256, 2, 'little')
-                self.target = (self.target_prefix + self.midfix*2 + suffix*252).hex()
+                self.target = (self.target_prefix +
+                               self.midfix*2 + suffix*252).hex()
                 print("reducing target difficulty")
             if time.time() - self.graph[block.get_header()["prev_header"]]["timestamp"] < 2:
                 self.midfix = int.to_bytes(int.from_bytes(
                     self.midfix, 'little') - 256, 2, 'little')
-                self.target = (self.target_prefix + self.midfix*2 + suffix*252).hex()
+                self.target = (self.target_prefix +
+                               self.midfix*2 + suffix*252).hex()
                 print("increasing target difficulty")
             self.resolve_longest_header()
 
